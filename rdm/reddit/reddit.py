@@ -25,7 +25,7 @@ class Reddit:
     ):
         self.save_path = config["save_path"]
         if not os.path.exists(self.save_path):
-            os.mkdir(self.save_path)
+            os.makedirs(self.save_path)
 
         self.config_name = config["config_name"]
         self.previous_timestamp = self.get_timestamp()
@@ -49,7 +49,7 @@ class Reddit:
         self.data = []
 
     def get_timestamp(self):
-        self.timestamp_file = f"{self.save_path}/{self.config_name}_timestamp"
+        self.timestamp_file = f"{self.save_path}/logs/.last-update"
         if os.path.exists(self.timestamp_file):
             with open(self.timestamp_file, "r") as f:
                 return f.read().rstrip("\n")

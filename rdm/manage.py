@@ -1,5 +1,7 @@
 from rdm.reddit.reddit import Reddit
 from pathlib import Path
+
+import argparse
 import logging
 import os
 import psycopg2
@@ -10,7 +12,6 @@ class DownloadManager:
     def __init__(self, config):
         with open(config, 'r') as f:
             self.config = yaml.load(f, Loader=yaml.Loader)
-            print(self.config)
 
         self.reddit = Reddit(config=self.config['reddit'])
         self.sql_errors = 0
@@ -181,11 +182,21 @@ class DownloadManager:
                 print(file, ":")
                 self.update_db(os.path.join(directory, file))
 
+def cli():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("config", type=str)
 
-if __name__ == "__main__":
-    dm = DownloadManager(config="config.yaml")
+    args = arg_parser.parse_args()
+    start(config=args.config)
+
+
+def start(config="config.yaml"):
+    dm = DownloadManager(config=config)
     dm.get_posts()
     dm.update_db(dm.dump_file)
 
     print(f"Total posts: {dm.total_posts}")
     print(f"SQL Errors: {dm.sql_errors}")
+
+if __name__ == "__main__":
+    start()

@@ -14,6 +14,11 @@ setup(
         'PyYAML',
         'requests',
         ],
+    entry_points={
+        'console_scripts': [
+            'rdm = rdm.manage:cli'
+            ]
+        }
     )
 
 
