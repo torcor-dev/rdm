@@ -2,7 +2,7 @@ from rdm.reddit.imgur_api_wrapper.imgur import Imgur
 from rdm.reddit.imgur_api_wrapper.imgurmedia import ImgurMedia
 from rdm.reddit.redditmedia import RedditMedia
 from rdm.reddit.downloader import Downloader, DownloadException
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from pyaml import yaml
 import datetime
 import ffmpeg
@@ -19,34 +19,37 @@ class Reddit:
 
     def __init__(
         self,
-        praw_config="bot1",
-        user_agent="testing_api_idk",
-        config="config.yaml",
+        config,
         *args,
         **kwargs,
     ):
-        with open(config, "r") as f:
-            config_file = yaml.load(f, Loader=yaml.Loader)
-
-        self.previous_timestamp = self.get_timestamp(config)
-
-        self.save_path = config_file["save_path"]
+        self.save_path = config["save_path"]
         if not os.path.exists(self.save_path):
             os.mkdir(self.save_path)
 
+        self.config_name = config["config_name"]
+        self.previous_timestamp = self.get_timestamp()
         self.log_setup(logging.WARNING)
-        self.directory_structure = config_file["directory_structure"]
-        self.subreddits = config_file["subreddits"]
-        self.listing = config_file["listing"]
-        self.number_of_posts = config_file["number_of_posts"]
-        self.reddit = praw.Reddit(praw_config, user_agent=user_agent)
-        self.imgur = Imgur()
+        #self.directory_structure = config["directory_structure"]
+        self.subreddits = config["subreddits"]
+        self.listing = config["listing"]
+        self.number_of_posts = config["number_of_posts"]
+        self.reddit = praw.Reddit(
+                client_id=config["praw"]["client_id"],
+                client_secret=config["praw"]["client_secret"],
+                user_agent=config["praw"]["user_agent"],
+                username=config["praw"]["username"],
+                password=config["praw"]["password"],
+                )
+        self.imgur = Imgur(
+                client_id=config["imgur"]["client_id"],
+                client_secret=config["imgur"]["client_secret"],
+                )
         self.cur_post = None
         self.data = []
 
-    def get_timestamp(self, config_name):
-        config_name = config_name.split(".")[0]
-        self.timestamp_file = f"{config_name}_timestamp"
+    def get_timestamp(self):
+        self.timestamp_file = f"{self.save_path}/{self.config_name}_timestamp"
         if os.path.exists(self.timestamp_file):
             with open(self.timestamp_file, "r") as f:
                 return f.read().rstrip("\n")
@@ -94,7 +97,12 @@ class Reddit:
             file_data = {}
             file_path = self.generate_file_path(file)
             if file[1] in self.IMAGE_TYPES:
-                img = Image.open(file_path)
+                try:
+                    img = Image.open(file_path)
+                except UnidentifiedImageError:
+                    logging.warning(f"Could not identify image: {file_path}. Skipping.")
+                    os.remove(file_path)
+                    continue
 
                 file_data["type"] = "image"
                 file_data["width"] = img.width

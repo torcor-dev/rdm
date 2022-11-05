@@ -1,7 +1,0 @@
-save_path: img/ 
-subreddits: [
-    pics,
-    wallpapers,
-    ]
-listing: hot
-number_of_posts: 5

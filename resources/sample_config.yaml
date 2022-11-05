@@ -1,0 +1,25 @@
+reddit:
+    config_name: foo
+    save_path: img/ 
+    subreddits: [
+        pics,
+        wallpapers,
+        ]
+    listing: hot
+    number_of_posts: 5
+    praw:
+        client_id: client_id
+        client_secret: client_secret
+        user_agent: user_agent
+        username: username
+        password: password
+    imgur_api:
+        client_id: client_id
+        client_secret: client_secret
+
+database:
+    enabled: false
+    name: rdm
+    user: foo
+    password: bar
+    host: localhost

@@ -1,0 +1,11 @@
+venv/
+db/
+.vim/
+*timestamp
+__pycache__/
+rdm.egg-info/
+
+
+sql/scratchpad.sql
+db/
+config.yaml

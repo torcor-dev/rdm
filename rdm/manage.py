@@ -7,11 +7,12 @@ import yaml
 
 
 class DownloadManager:
-    def __init__(self, config=None):
-        if config:
-            self.reddit = Reddit(config=config)
-        else:
-            self.reddit = Reddit()
+    def __init__(self, config):
+        with open(config, 'r') as f:
+            self.config = yaml.load(f, Loader=yaml.Loader)
+            print(self.config)
+
+        self.reddit = Reddit(config=self.config['reddit'])
         self.sql_errors = 0
         self.total_posts = 0
 
@@ -22,19 +23,16 @@ class DownloadManager:
         finally:
             self.dump_file = self.reddit.yaml_dump()
 
+            if self.config['database']['enabled']:
+                self.update_db(self.dump_file)
+
     def connect_to_db(self):
-        filepath = str(Path.home())
-        filepath += "/.secrets/database.yaml"
-        with open(filepath, "r") as sf:
-            SECRETS = yaml.load(sf, Loader=yaml.Loader)
-
         db = psycopg2.connect(
-            dbname=SECRETS["name"],
-            user=SECRETS["user"],
-            password=SECRETS["password"],
-            host=SECRETS["host"],
+            dbname=self.config['database']["name"],
+            user=self.config['database']["user"],
+            password=self.config['database']["password"],
+            host=self.config['database']["host"],
         )
-
         return db
 
     def execute_sql(self, sql, values):
