@@ -49,7 +49,10 @@ class Reddit:
         self.data = []
 
     def get_timestamp(self):
-        self.timestamp_file = f"{self.save_path}/logs/.last-update"
+        dir = f"{self.save_path}logs/.last-update/"
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        self.timestamp_file = f"{dir}/{self.config_name}"
         if os.path.exists(self.timestamp_file):
             with open(self.timestamp_file, "r") as f:
                 return f.read().rstrip("\n")
