@@ -13,8 +13,8 @@ import os
 
 
 class Reddit:
-    IMAGE_TYPES = ["jpg", "jpeg", "png", "gif"]
-    VIDEO_TYPES = ["mp4", "webm", "gifv", "mkv"]
+    IMAGE_TYPES = ["jpg", "jpeg", "png"]
+    VIDEO_TYPES = ["mp4", "webm", "gifv", "mkv", "gif"]
     THUMBNAIL_SIZE = 256
 
     def __init__(
@@ -30,21 +30,23 @@ class Reddit:
         self.config_name = config["config_name"]
         self.previous_timestamp = self.get_timestamp()
         self.log_setup(logging.WARNING)
-        #self.directory_structure = config["directory_structure"]
+        # self.directory_structure = config["directory_structure"]
         self.subreddits = config["subreddits"]
         self.listing = config["listing"]
         self.number_of_posts = config["number_of_posts"]
+        self.fetch_videos = config.get("fetch_videos", True)
+        self.fetch_images = config.get("fetch_images", True)
         self.reddit = praw.Reddit(
-                client_id=config["praw"]["client_id"],
-                client_secret=config["praw"]["client_secret"],
-                user_agent=config["praw"]["user_agent"],
-                username=config["praw"]["username"],
-                password=config["praw"]["password"],
-                )
+            client_id=config["praw"]["client_id"],
+            client_secret=config["praw"]["client_secret"],
+            user_agent=config["praw"]["user_agent"],
+            username=config["praw"]["username"],
+            password=config["praw"]["password"],
+        )
         self.imgur = Imgur(
-                client_id=config["imgur"]["client_id"],
-                client_secret=config["imgur"]["client_secret"],
-                )
+            client_id=config["imgur"]["client_id"],
+            client_secret=config["imgur"]["client_secret"],
+        )
         self.cur_post = None
         self.data = []
 
@@ -80,7 +82,9 @@ class Reddit:
         files = []
         for url in media.urls:
             ext = self.parse_extension(url)
-            if ext in self.IMAGE_TYPES or ext in self.VIDEO_TYPES:
+            if (self.fetch_images and ext in self.IMAGE_TYPES) or (
+                self.fetch_videos and ext in self.VIDEO_TYPES
+            ):
                 downloader = Downloader(url, ext, self.save_path)
                 try:
                     downloader.save()
@@ -225,7 +229,9 @@ class Reddit:
             for submission in listing(limit=self.number_of_posts):
                 if submission.stickied:
                     continue
-                if submission.created < float(self.previous_timestamp):
+                if self.listing != "top" and submission.created < float(
+                    self.previous_timestamp
+                ):
                     continue
                 try:
                     msg = f"Submission: {submission.id} - "
